@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>SV 담당 매장 검색</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-text-size-adjust: 100%; }
+body { font-family: -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif; background: #f5f5f5; color: #111; min-height: 100vh; }
+.header { background: #fff; padding: 16px; border-bottom: 1px solid #e0e0e0; position: sticky; top: 0; z-index: 10; }
+.header h1 { font-size: 17px; font-weight: 600; margin-bottom: 12px; color: #111; }
+.search-wrap { position: relative; }
+.search-wrap input { width: 100%; padding: 11px 40px 11px 14px; font-size: 16px; font-family: inherit; border: 1.5px solid #ccc; border-radius: 10px; background: #fafafa; color: #111; outline: none; -webkit-appearance: none; }
+.search-wrap input:focus { border-color: #555; background: #fff; }
+.clr { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: #bbb; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; color: #fff; cursor: pointer; display: none; line-height: 20px; text-align: center; padding: 0; }
+.filters { display: flex; gap: 7px; flex-wrap: wrap; padding: 12px 16px; background: #fff; border-bottom: 1px solid #e0e0e0; }
+.flt { font-size: 13px; font-family: inherit; padding: 6px 13px; border-radius: 99px; border: 1px solid #ccc; background: #fff; color: #555; cursor: pointer; -webkit-tap-highlight-color: transparent; -webkit-appearance: none; white-space: nowrap; }
+.flt.on { background: #222; border-color: #222; color: #fff; font-weight: 500; }
+.stats { font-size: 13px; color: #888; padding: 10px 16px 6px; }
+.list { padding: 0 16px 24px; display: flex; flex-direction: column; gap: 6px; }
+.row { display: flex; align-items: center; gap: 8px; padding: 12px 14px; background: #fff; border-radius: 10px; border: 1px solid #e8e8e8; }
+.name { flex: 1; font-size: 15px; font-weight: 500; color: #111; word-break: keep-all; min-width: 0; }
+.region { font-size: 12px; color: #aaa; white-space: nowrap; }
+.type { font-size: 11px; color: #bbb; white-space: nowrap; }
+.badge { font-size: 12px; font-weight: 500; padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
+.sv0 { background: #deeefa; color: #0a4a80; }
+.sv1 { background: #dff0e2; color: #1a5c28; }
+.sv2 { background: #fdf0d8; color: #6b3a00; }
+.sv3 { background: #fce8f2; color: #7a1f4a; }
+.sv4 { background: #efefef; color: #444; }
+mark { background: #ffd966; color: #333; border-radius: 2px; padding: 0 1px; }
+.empty { text-align: center; color: #aaa; font-size: 14px; padding: 3rem 0; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>SV 담당 매장 검색</h1>
+  <div class="search-wrap">
+    <input type="text" id="q" placeholder="매장명 또는 지역 검색..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <button class="clr" id="clr">✕</button>
+  </div>
+</div>
+
+<div class="filters">
+  <button class="flt on" data-sv="">전체</button>
+  <button class="flt" data-sv="전영언">전영언 (40/6)</button>
+  <button class="flt" data-sv="진동환">진동환 (42/6)</button>
+  <button class="flt" data-sv="김상곤">김상곤 (43/6)</button>
+  <button class="flt" data-sv="박민솔">박민솔 (27/0)</button>
+  <button class="flt" data-sv="대전지사">대전지사 (15/0)</button>
+</div>
+
+<div class="stats" id="stats"></div>
+<div class="list" id="list"></div>
+
+<script>
+var SV_CLASS = { '전영언':'sv0','진동환':'sv1','김상곤':'sv2','박민솔':'sv3','대전지사':'sv4' };
+var DATA=[{"sv":"전영언","store":"순천조례점","region":"전남","type":"로드샵"},{"sv":"전영언","store":"여수학동점","region":"전남","type":"로드샵"},{"sv":"전영언","store":"순천연향점","region":"전남","type":"로드샵"},{"sv":"전영언","store":"광주진월점","region":"전남","type":"로드샵"},{"sv":"전영언","store":"전주역점","region":"전북","type":"로드샵"},{"sv":"전영언","store":"전주중화산점","region":"전북","type":"로드샵"},{"sv":"전영언","store":"익산마동점","region":"전북","type":"로드샵"},{"sv":"전영언","store":"제주구남점","region":"제주","type":"로드샵"},{"sv":"전영언","store":"포천송우점","region":"경기","type":"로드샵"},{"sv":"전영언","store":"일산점","region":"경기","type":"로드샵"},{"sv":"전영언","store":"김포한강신도시점","region":"경기","type":"로드샵"},{"sv":"전영언","store":"파주금촌점","region":"경기","type":"로드샵"},{"sv":"전영언","store":"김포사우점","region":"경기","type":"로드샵"},{"sv":"전영언","store":"일산탄현점","region":"경기","type":"로드샵"},{"sv":"전영언","store":"김포운양점","region":"경기","type":"로드샵"},{"sv":"전영언","store":"김포구래점","region":"경기","type":"로드샵"},{"sv":"전영언","store":"일산백석점","region":"경기","type":"로드샵"},{"sv":"전영언","store":"파주야당점","region":"경기","type":"로드샵"},{"sv":"전영언","store":"일산대화점","region":"경기","type":"로드샵"},{"sv":"전영언","store":"고양식사점","region":"경기","type":"로드샵"},{"sv":"전영언","store":"파주초롱꽃마을점","region":"경기","type":"로드샵"},{"sv":"전영언","store":"파주교하점","region":"경기","type":"로드샵"},{"sv":"전영언","store":"고양원당점","region":"경기","type":"로드샵"},{"sv":"전영언","store":"고양삼송역점","region":"경기","type":"로드샵"},{"sv":"전영언","store":"김포풍무점","region":"경기","type":"로드샵"},{"sv":"전영언","store":"고양DMC향동점","region":"경기","type":"로드샵"},{"sv":"전영언","store":"김포걸포점","region":"경기","type":"로드샵"},{"sv":"전영언","store":"서울상암DMC점","region":"서울","type":"로드샵"},{"sv":"전영언","store":"서울목동점","region":"서울","type":"로드샵"},{"sv":"전영언","store":"서울발산역점","region":"서울","type":"로드샵"},{"sv":"전영언","store":"서울상암점","region":"서울","type":"로드샵"},{"sv":"전영언","store":"서울홍대점","region":"서울","type":"로드샵"},{"sv":"전영언","store":"서울당산점","region":"서울","type":"로드샵"},{"sv":"전영언","store":"서울문래점","region":"서울","type":"로드샵"},{"sv":"전영언","store":"충북제천점","region":"충북","type":"로드샵"},{"sv":"전영언","store":"청주충북대점","region":"충북","type":"로드샵"},{"sv":"전영언","store":"청주봉명점","region":"충북","type":"로드샵"},{"sv":"전영언","store":"청주율량점","region":"충북","type":"로드샵"},{"sv":"전영언","store":"청주동남지구점","region":"충북","type":"로드샵"},{"sv":"전영언","store":"수원금곡호매실점","region":"경기","type":"로드샵"},{"sv":"전영언","store":"군산휴게소(목포방향)","region":"","type":"휴게소"},{"sv":"전영언","store":"춘향휴게소(순천방향)","region":"","type":"휴게소"},{"sv":"전영언","store":"춘향휴게소(완주방향)","region":"","type":"휴게소"},{"sv":"전영언","store":"황전휴게소(순천방향)","region":"","type":"휴게소"},{"sv":"전영언","store":"황전휴게소(전주방향)","region":"","type":"휴게소"},{"sv":"전영언","store":"양주휴게소(일산방향)","region":"","type":"휴게소"},{"sv":"진동환","store":"대구다사대실역점","region":"대구","type":"로드샵"},{"sv":"진동환","store":"거제고현점","region":"경남","type":"로드샵"},{"sv":"진동환","store":"경남사천점","region":"경남","type":"로드샵"},{"sv":"진동환","store":"구미인동점","region":"경북","type":"로드샵"},{"sv":"진동환","store":"밀양역점","region":"경남","type":"로드샵"},{"sv":"진동환","store":"부산수영점","region":"경남","type":"로드샵"},{"sv":"진동환","store":"창원상남점","region":"경남","type":"로드샵"},{"sv":"진동환","store":"포항장성점","region":"경북","type":"로드샵"},{"sv":"진동환","store":"강릉교동점","region":"강원","type":"로드샵"},{"sv":"진동환","store":"남양주덕소점","region":"경기","type":"로드샵"},{"sv":"진동환","store":"양주옥정점","region":"경기","type":"로드샵"},{"sv":"진동환","store":"동두천지행점","region":"경기","type":"로드샵"},{"sv":"진동환","store":"의정부중앙점","region":"경기","type":"로드샵"},{"sv":"진동환","store":"의정부민락점","region":"경기","type":"로드샵"},{"sv":"진동환","store":"의정부호원점","region":"경기","type":"로드샵"},{"sv":"진동환","store":"의정부용현점","region":"경기","type":"로드샵"},{"sv":"진동환","store":"구리수택점","region":"경기","type":"로드샵"},{"sv":"진동환","store":"이천로데오점","region":"경기","type":"로드샵"},{"sv":"진동환","store":"부천신중동점","region":"경기","type":"로드샵"},{"sv":"진동환","store":"부천송내점","region":"경기","type":"로드샵"},{"sv":"진동환","store":"부천역곡점","region":"경기","type":"로드샵"},{"sv":"진동환","store":"부천현대중동점","region":"경기","type":"로드샵"},{"sv":"진동환","store":"부천상동역점","region":"경기","type":"로드샵"},{"sv":"진동환","store":"부천세이브존점","region":"경기","type":"로드샵"},{"sv":"진동환","store":"부천신중동2호점","region":"경기","type":"로드샵"},{"sv":"진동환","store":"서울수유점","region":"서울","type":"로드샵"},{"sv":"진동환","store":"서울노원점","region":"서울","type":"로드샵"},{"sv":"진동환","store":"서울노원점","region":"서울","type":"로드샵"},{"sv":"진동환","store":"서울마들역점","region":"서울","type":"로드샵"},{"sv":"진동환","store":"서울가산점","region":"서울","type":"로드샵"},{"sv":"진동환","store":"서울홍은점","region":"서울","type":"로드샵"},{"sv":"진동환","store":"서울한양대점","region":"서울","type":"로드샵"},{"sv":"진동환","store":"대전한남대점","region":"대전","type":"로드샵"},{"sv":"진동환","store":"세종나성점","region":"세종","type":"로드샵"},{"sv":"진동환","store":"세종도담점","region":"세종","type":"로드샵"},{"sv":"진동환","store":"충북증평점","region":"충북","type":"로드샵"},{"sv":"진동환","store":"충북영동점","region":"충북","type":"로드샵"},{"sv":"진동환","store":"충북옥천점","region":"충북","type":"로드샵"},{"sv":"진동환","store":"부천역점","region":"충북","type":"로드샵"},{"sv":"진동환","store":"논산중앙점","region":"충남","type":"로드샵"},{"sv":"진동환","store":"두정역점","region":"충북","type":"로드샵"},{"sv":"진동환","store":"광양칠성점","region":"전남","type":"로드샵"},{"sv":"진동환","store":"진주휴게소(부산방향)","region":"","type":"휴게소"},{"sv":"진동환","store":"김천휴게소(부산방향)","region":"","type":"휴게소"},{"sv":"진동환","store":"김천휴게소(서울방향)","region":"","type":"휴게소"},{"sv":"진동환","store":"문산휴게소(순천방향)","region":"","type":"휴게소"},{"sv":"진동환","store":"횡성휴게소(강릉방향)","region":"","type":"휴게소"},{"sv":"진동환","store":"문막휴게소(강릉방향)","region":"","type":"휴게소"},{"sv":"김상곤","store":"인천구월점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인천청라점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인천송도점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인천월미도점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인천영종하늘도시점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"영종운서점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인천논현점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인천검단점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인천계양점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인천가정점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인천검단사거리역점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인천삼산점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인천경서점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인천서창2지구점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인천만수역점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인천용현점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인천시청점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인천소래포구점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인천루원베르힐점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인천서구청점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인천당하점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"송도스마트스퀘어점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인천원당점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"백령도점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"인하대역점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"송도8공구점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"송도롯데몰점","region":"인천","type":"로드샵"},{"sv":"김상곤","store":"서울마곡점","region":"서울","type":"로드샵"},{"sv":"김상곤","store":"가양점","region":"서울","type":"로드샵"},{"sv":"김상곤","store":"서울화곡점","region":"서울","type":"로드샵"},{"sv":"김상곤","store":"서울강서구청점","region":"서울","type":"로드샵"},{"sv":"김상곤","store":"서울공항동점","region":"서울","type":"로드샵"},{"sv":"김상곤","store":"서울역촌점","region":"서울","type":"로드샵"},{"sv":"김상곤","store":"서울대역점","region":"서울","type":"로드샵"},{"sv":"김상곤","store":"불당점","region":"충남","type":"로드샵"},{"sv":"김상곤","store":"천안신방점","region":"충남","type":"로드샵"},{"sv":"김상곤","store":"천안두정점","region":"충남","type":"로드샵"},{"sv":"김상곤","store":"천안안서점","region":"충남","type":"로드샵"},{"sv":"김상곤","store":"아산용화점","region":"충남","type":"로드샵"},{"sv":"김상곤","store":"백석대점","region":"충남","type":"로드샵"},{"sv":"김상곤","store":"아산배방월천점","region":"충남","type":"로드샵"},{"sv":"김상곤","store":"아산탕정점","region":"충남","type":"로드샵"},{"sv":"김상곤","store":"천안법원점","region":"충남","type":"로드샵"},{"sv":"김상곤","store":"군위휴게소(춘천방향)","region":"","type":"휴게소"},{"sv":"김상곤","store":"용인휴게소(강릉방향)","region":"","type":"휴게소"},{"sv":"김상곤","store":"용인휴게소(인천방향)","region":"","type":"휴게소"},{"sv":"김상곤","store":"벌곡휴게소(논산방향)","region":"","type":"휴게소"},{"sv":"김상곤","store":"함평천지휴게소(목포방향)","region":"","type":"휴게소"},{"sv":"김상곤","store":"진안마이산휴게소(익산방향)","region":"","type":"휴게소"},{"sv":"박민솔","store":"수원인계본점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"오산운암점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"안성점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"시흥은계점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"시흥정왕점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"시흥배곧점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"안양인덕원점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"야탑역점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"안산고잔점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"안산한대앞역점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"수원역점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"하남미사점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"화성향남2지구점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"동탄북광장점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"안산월피점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"오산궐동점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"수원세류점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"금곡어울림마을점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"수원곡반정점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"화성석우점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"화성송산그린시티점","region":"경기","type":"로드샵"},{"sv":"박민솔","store":"서울방배이수점","region":"서울","type":"로드샵"},{"sv":"박민솔","store":"청주강서점","region":"충북","type":"로드샵"},{"sv":"박민솔","store":"청주오창점","region":"충북","type":"로드샵"},{"sv":"박민솔","store":"청주산남점","region":"충북","type":"로드샵"},{"sv":"박민솔","store":"청주수곡점","region":"충북","type":"로드샵"},{"sv":"박민솔","store":"청주대점","region":"충북","type":"로드샵"},{"sv":"대전지사","store":"대전봉명점","region":"대전","type":"로드샵"},{"sv":"대전지사","store":"대전오류점","region":"대전","type":"로드샵"},{"sv":"대전지사","store":"대전관저점","region":"대전","type":"로드샵"},{"sv":"대전지사","store":"대전괴정점","region":"대전","type":"로드샵"},{"sv":"대전지사","store":"대전시청점","region":"대전","type":"로드샵"},{"sv":"대전지사","store":"대전신탄진점","region":"대전","type":"로드샵"},{"sv":"대전지사","store":"대전복수점","region":"대전","type":"로드샵"},{"sv":"대전지사","store":"대전우송대점","region":"대전","type":"로드샵"},{"sv":"대전지사","store":"대전송촌점","region":"대전","type":"로드샵"},{"sv":"대전지사","store":"대전월평점","region":"대전","type":"로드샵"},{"sv":"대전지사","store":"대전도안점","region":"대전","type":"로드샵"},{"sv":"대전지사","store":"대전중리점","region":"대전","type":"로드샵"},{"sv":"대전지사","store":"대전가오점","region":"대전","type":"로드샵"},{"sv":"대전지사","store":"창원경남대점","region":"경남","type":"로드샵"},{"sv":"대전지사","store":"부산서면본점","region":"부산","type":"로드샵"}];
+
+var curSV = '';
+var composing = false;
+
+function setSV(sv) {
+  curSV = sv;
+  var btns = document.querySelectorAll('.flt');
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].classList.toggle('on', btns[i].getAttribute('data-sv') === sv);
+  }
+  render();
+}
+
+function clearQ() {
+  document.getElementById('q').value = '';
+  document.getElementById('clr').style.display = 'none';
+  render();
+}
+
+function hl(text, q) {
+  if (!q) return text;
+  var idx = text.toLowerCase().indexOf(q.toLowerCase());
+  if (idx === -1) return text;
+  return text.slice(0, idx) + '<mark>' + text.slice(idx, idx + q.length) + '</mark>' + text.slice(idx + q.length);
+}
+
+function render() {
+  var q = document.getElementById('q').value.trim();
+  document.getElementById('clr').style.display = q ? 'block' : 'none';
+  var list = DATA.slice();
+  if (curSV) list = list.filter(function(d){ return d.sv === curSV; });
+  if (q) list = list.filter(function(d){ return d.store.toLowerCase().indexOf(q.toLowerCase()) !== -1 || d.region.toLowerCase().indexOf(q.toLowerCase()) !== -1; });
+  var statsEl = document.getElementById('stats');
+  statsEl.textContent = (q || curSV) ? '검색 결과 ' + list.length + '개' : '전체 ' + list.length + '개 매장';
+  var el = document.getElementById('list');
+  if (!list.length) { el.innerHTML = '<div class="empty">검색 결과가 없습니다</div>'; return; }
+  var html = '';
+  for (var i = 0; i < list.length; i++) {
+    var d = list[i];
+    html += '<div class="row">';
+    html += '<span class="name">' + hl(d.store, q) + '</span>';
+    if (d.region) html += '<span class="region">' + hl(d.region, q) + '</span>';
+    html += '<span class="type">' + d.type + '</span>';
+    html += '<span class="badge ' + (SV_CLASS[d.sv]||'sv4') + '">' + d.sv + '</span>';
+    html += '</div>';
+  }
+  el.innerHTML = html;
+}
+
+var btns = document.querySelectorAll('.flt');
+for (var i = 0; i < btns.length; i++) {
+  btns[i].addEventListener('click', (function(sv){ return function(){ setSV(sv); }; })(btns[i].getAttribute('data-sv')));
+}
+
+var inp = document.getElementById('q');
+document.getElementById('clr').addEventListener('click', clearQ);
+
+inp.addEventListener('compositionstart', function(){ composing = true; });
+inp.addEventListener('compositionend', function(){ composing = false; render(); });
+inp.addEventListener('input', function(){ if (!composing) render(); });
+inp.addEventListener('keyup', function(){ if (!composing) render(); });
+inp.addEventListener('change', function(){ render(); });
+
+render();
+</script>
+</body>
+</html>
